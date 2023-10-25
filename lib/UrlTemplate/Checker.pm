@@ -3,6 +3,7 @@ package UrlTemplate::Checker;
 use v5.36;
 use strict;
 use warnings;
+no warnings 'experimental::builtin';
 use List::AllUtils qw/first all/;
 
 =head1 NAME
@@ -16,13 +17,6 @@ Version 0.01
 =cut
 
 our $VERSION = '0.01';
-sub new($class) {
-    my $self = {
-        raw_paths    => [],
-        parsed_paths => []
-    };
-    return bless $self, $class;
-}
 
 =head1 SYNOPSIS
 
@@ -39,6 +33,18 @@ sub new($class) {
     undef returned if no viable template was found
 =cut
 
+=head2 new
+    creates checker object
+=cut
+
+sub new($class) {
+    my $self = {
+        raw_paths    => [],
+        parsed_paths => []
+    };
+    return bless $self, $class;
+}
+
 =head2 append_paths(@paths)
     appends a paths to internal storage
 =cut
@@ -48,6 +54,7 @@ sub append_paths($self, @paths) {
 }
 
 sub _parse_path($self, $path) {
+    use Data::Dumper;
     my $noroot = $path =~ s|^/||r;
     my @path_tokens = split /\//, $noroot;
     # ':' represents key name, 't' represents token
@@ -62,14 +69,17 @@ sub check($self, $url) {
     my $cleaned_url = $url =~ s|^\w+://[\w.]+(?::\d+)/||r;
     my $url_parsed = [ split /\//, $cleaned_url ];
     my $result;
-    my $index = first { # iterating by stored paths
+    my $index = first {
+        # iterating by stored paths
         my $path_struct = $self->{parsed_paths}[$_];
         $result = {};
-        @$path_struct == @$url_parsed && all { # iterating by url path tokens
+        @$path_struct == @$url_parsed && all {
+            # iterating by url path tokens
             my $url_part = $url_parsed->[$_];
             my $path_part = $path_struct->[$_];
 
-            if ($path_part->[0] eq ':') { # is a key
+            if ($path_part->[0] eq ':') {
+                # is a key
                 $result->{$path_part->[1]} = $url_part;
                 builtin::true; # a key is always matched
             }
@@ -98,7 +108,6 @@ This is free software, licensed under:
 
   The Artistic License 2.0 (GPL Compatible)
 
-
 =cut
 
-1; # End of UrlTemplate::Checker
+builtin::true; # End of UrlTemplate::Checker
